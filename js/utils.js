@@ -263,3 +263,148 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
+// =========================================================================
+// DOCUMENT PREVIEW
+// =========================================================================
+/**
+ * Show document preview modal with metadata and content
+ * @param {Object} doc - Document object
+ * @param {Object} options - Options: showContent, showScore, contentLabel
+ */
+function showDocumentPreview(doc, options = {}) {
+    const { showContent = true, showScore = false, contentLabel = 'Content Preview' } = options;
+    const modal = $('docPreviewModal');
+    const body = $('docPreviewBody');
+    const title = $('docPreviewTitle');
+    const downloadBtn = $('docPreviewDownloadBtn');
+    const openBtn = $('docPreviewOpenBtn');
+    
+    if (!modal || !body) return;
+    
+    // Extract document info
+    const docId = doc.id || doc.document_id || doc.metadata?.document_id || '';
+    const filename = doc.filename || doc.file_name || doc.title || doc.metadata?.file_name || 'Untitled';
+    const category = doc.category || doc.document_type || doc.metadata?.category || '';
+    const docType = doc.document_type || doc.metadata?.document_type || '';
+    const project = doc.project || doc.metadata?.project || '';
+    const industry = doc.industry || doc.metadata?.industry_type || '';
+    const folderPath = doc.folder_path || doc.suggested_folder_path || doc.metadata?.suggested_folder_path || '';
+    const uploadDate = doc.upload_date || doc.created_at || doc.metadata?.upload_date || '';
+    const expiryDate = doc.expiry_date || doc.metadata?.expiry_date || '';
+    const summary = doc.summary || doc.metadata?.summary || '';
+    const score = doc.score;
+    const content = doc.text || doc.text_snippet || doc.snippet || doc.content || '';
+    const s3Url = doc.s3_url || doc.storage_url || doc.metadata?.s3_url || '';
+    
+    // Set title
+    if (title) title.innerHTML = `<i class="fas fa-file-alt"></i> ${escapeHtml(filename)}`;
+    
+    // Build metadata HTML
+    let metaHtml = '<div class="preview-metadata">';
+    metaHtml += '<h4><i class="fas fa-info-circle"></i> Document Metadata</h4>';
+    metaHtml += '<div class="preview-meta-grid">';
+    
+    if (docId) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Document ID</span><span class="meta-value mono">${escapeHtml(truncate(docId, 36))}</span></div>`;
+    if (filename) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Filename</span><span class="meta-value">${escapeHtml(filename)}</span></div>`;
+    if (category) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Category</span><span class="meta-value"><span class="status-badge">${escapeHtml(snakeToTitle(category))}</span></span></div>`;
+    if (docType && docType !== category) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Document Type</span><span class="meta-value">${escapeHtml(snakeToTitle(docType))}</span></div>`;
+    if (project) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Project</span><span class="meta-value"><i class="fas fa-project-diagram"></i> ${escapeHtml(project)}</span></div>`;
+    if (industry) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Industry</span><span class="meta-value"><i class="fas fa-industry"></i> ${escapeHtml(snakeToTitle(industry))}</span></div>`;
+    if (folderPath) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Folder Path</span><span class="meta-value"><i class="fas fa-folder"></i> ${escapeHtml(folderPath)}</span></div>`;
+    if (uploadDate) metaHtml += `<div class="preview-meta-item"><span class="meta-label">Upload Date</span><span class="meta-value"><i class="fas fa-calendar"></i> ${formatDateReadable(uploadDate)}</span></div>`;
+    if (expiryDate) {
+        const days = daysUntil(expiryDate);
+        metaHtml += `<div class="preview-meta-item"><span class="meta-label">Expiry Date</span><span class="meta-value"><span class="status-badge ${getExpiryStatusClass(days)}">${formatDateReadable(expiryDate)}</span></span></div>`;
+    }
+    if (showScore && score !== undefined && score !== null) {
+        metaHtml += `<div class="preview-meta-item"><span class="meta-label">Match Score</span><span class="meta-value"><span class="score-badge">${(score * 100).toFixed(1)}%</span></span></div>`;
+    }
+    
+    metaHtml += '</div></div>';
+    
+    // Build summary section
+    let summaryHtml = '';
+    if (summary) {
+        summaryHtml = `
+            <div class="preview-section">
+                <h4><i class="fas fa-robot"></i> AI Summary</h4>
+                <div class="preview-summary">${escapeHtml(summary)}</div>
+            </div>
+        `;
+    }
+    
+    // Build content section
+    let contentHtml = '';
+    if (showContent && content) {
+        contentHtml = `
+            <div class="preview-section">
+                <h4><i class="fas fa-align-left"></i> ${escapeHtml(contentLabel)}</h4>
+                <div class="preview-content">${escapeHtml(content)}</div>
+            </div>
+        `;
+    }
+    
+    // Build raw metadata (collapsible)
+    let rawMetaHtml = '';
+    if (doc.metadata && Object.keys(doc.metadata).length > 0) {
+        rawMetaHtml = `
+            <div class="preview-section">
+                <details class="raw-metadata">
+                    <summary><i class="fas fa-code"></i> Raw Chunk Metadata</summary>
+                    <pre>${escapeHtml(JSON.stringify(doc.metadata, null, 2))}</pre>
+                </details>
+            </div>
+        `;
+    }
+    
+    body.innerHTML = metaHtml + summaryHtml + contentHtml + rawMetaHtml;
+    
+    // Set up download button
+    if (downloadBtn) {
+        if (docId) {
+            downloadBtn.style.display = '';
+            downloadBtn.onclick = () => {
+                const url = api.getDocumentDownloadUrl(docId);
+                window.open(url, '_blank');
+            };
+        } else {
+            downloadBtn.style.display = 'none';
+        }
+    }
+    
+    // Set up open button
+    if (openBtn) {
+        if (s3Url) {
+            openBtn.style.display = '';
+            openBtn.href = s3Url;
+        } else {
+            openBtn.style.display = 'none';
+        }
+    }
+    
+    openModal('docPreviewModal');
+}
+
+/**
+ * Get file icon class based on filename extension
+ */
+function getFileIconClass(filename) {
+    const ext = (filename || '').split('.').pop().toLowerCase();
+    const icons = { 
+        pdf: 'fa-file-pdf', 
+        doc: 'fa-file-word', 
+        docx: 'fa-file-word', 
+        xls: 'fa-file-excel', 
+        xlsx: 'fa-file-excel', 
+        png: 'fa-file-image', 
+        jpg: 'fa-file-image', 
+        jpeg: 'fa-file-image',
+        txt: 'fa-file-lines', 
+        csv: 'fa-file-csv',
+        json: 'fa-file-code',
+        html: 'fa-file-code',
+        xml: 'fa-file-code'
+    };
+    return icons[ext] || 'fa-file';
+}

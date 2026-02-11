@@ -94,10 +94,11 @@ const Documents = {
         tbody.innerHTML = pageData.map(doc => {
             const expiryDate = doc.expiry_date || doc.metadata?.expiry_date || null;
             const days = expiryDate ? daysUntil(expiryDate) : null;
+            const docId = doc.id || doc.document_id || '';
             return `<tr>
                 <td>
                     <div class="doc-name">
-                        <i class="fas ${this.getFileIcon(doc.filename || '')}"></i>
+                        <i class="fas ${this.getFileIcon(doc.filename || '')}" style="color:var(--gray-500);"></i>
                         ${escapeHtml(truncate(doc.filename || doc.title || 'Untitled', 35))}
                     </div>
                 </td>
@@ -105,11 +106,11 @@ const Documents = {
                 <td>${escapeHtml(doc.project || doc.metadata?.project || 'N/A')}</td>
                 <td>${escapeHtml(snakeToTitle(doc.industry || doc.metadata?.industry_type || 'N/A'))}</td>
                 <td>${formatDateReadable(doc.upload_date || doc.created_at || doc.metadata?.upload_date)}</td>
-                <td>${(doc.expiry_date || doc.metadata?.expiry_date) ? `<span class="status-badge ${getExpiryStatusClass(days)}">${formatDateReadable(doc.expiry_date || doc.metadata?.expiry_date)}</span>` : 'N/A'}</td>
+                <td>${expiryDate ? `<span class="status-badge ${getExpiryStatusClass(days)}">${formatDateReadable(expiryDate)}</span>` : 'N/A'}</td>
                 <td class="actions-cell">
-                    <button class="btn-icon" title="View Details" onclick="Documents.viewDocument('${doc.id || doc.document_id || ''}')"><i class="fas fa-eye"></i></button>
-                    <button class="btn-icon" title="Download" onclick="Documents.downloadDocument('${doc.id || doc.document_id || ''}', '${escapeHtml(doc.filename || '')}')"><i class="fas fa-download"></i></button>
-                    <button class="btn-icon danger" title="Delete" onclick="Documents.confirmDelete('${doc.id || doc.document_id || ''}', '${escapeHtml(doc.filename || '')}')"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon" title="Preview" onclick="Documents.previewDocument(${pageData.indexOf(doc)})"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon" title="Download" onclick="Documents.downloadDocument('${docId}', '${escapeHtml(doc.filename || '')}')"><i class="fas fa-download"></i></button>
+                    <button class="btn-icon danger" title="Delete" onclick="Documents.confirmDelete('${docId}', '${escapeHtml(doc.filename || '')}')"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>`;
         }).join('');
@@ -138,6 +139,14 @@ const Documents = {
         this.currentPage = page;
         this.renderTable();
         this.renderPagination();
+    },
+
+    previewDocument(index) {
+        const start = (this.currentPage - 1) * this.pageSize;
+        const doc = this.filteredDocuments[start + index];
+        if (doc) {
+            showDocumentPreview(doc, { showContent: false });
+        }
     },
 
     getFileIcon(filename) {

@@ -46,19 +46,48 @@ const Alerts = {
         if (!tbody) return;
 
         if (!this.alertsData.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No alerts at this time</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No alerts at this time</td></tr>';
             return;
         }
 
-        tbody.innerHTML = this.alertsData.map(alert => `
+        tbody.innerHTML = this.alertsData.map((alert, i) => {
+            const docId = alert.document_id || alert.id || '';
+            return `
             <tr>
-                <td>${escapeHtml(truncate(alert.filename || alert.document_id || alert.document || 'Untitled', 40))}</td>
+                <td><i class="fas ${getFileIconClass(alert.filename || '')}" style="margin-right:6px;color:var(--gray-500);"></i>${escapeHtml(truncate(alert.filename || alert.document_id || alert.document || 'Untitled', 35))}</td>
                 <td>${escapeHtml(snakeToTitle(alert.alert_type || alert.category || alert.type || 'N/A'))}</td>
                 <td>${formatDateReadable(alert.expiry_date || alert.created_at || alert.date)}</td>
                 <td>${alert.days_until !== undefined ? alert.days_until + ' days' : (alert.expiry_date ? daysUntil(alert.expiry_date) + ' days' : 'N/A')}</td>
                 <td><span class="status-badge ${getExpiryStatusClass(alert.days_until ?? daysUntil(alert.expiry_date))}">${alert.severity || alert.status || getExpiryStatusLabel(alert.days_until ?? daysUntil(alert.expiry_date))}</span></td>
+                <td>
+                    <button class="btn-icon-sm" onclick="Alerts.previewAlert(${i})" title="Preview"><i class="fas fa-eye"></i></button>
+                    ${docId ? `<button class="btn-icon-sm" onclick="Alerts.downloadAlert('${docId}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
+                </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
+    },
+
+    previewAlert(index) {
+        const alert = this.alertsData[index];
+        if (alert) {
+            // Convert alert to doc-like object for preview
+            const doc = {
+                id: alert.document_id || alert.id,
+                filename: alert.filename || alert.document,
+                category: alert.category || alert.alert_type,
+                expiry_date: alert.expiry_date,
+                ...alert
+            };
+            showDocumentPreview(doc, { showContent: false });
+        }
+    },
+
+    downloadAlert(docId) {
+        if (docId) {
+            const url = api.getDocumentDownloadUrl(docId);
+            window.open(url, '_blank');
+        }
     },
 
     renderEmailStatus(status) {

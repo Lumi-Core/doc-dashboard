@@ -372,10 +372,10 @@
                             <tr>
                                 <th>Document</th>
                                 <th>Category</th>
-                                <th>Type</th>
+                                <th>Project</th>
+                                <th>Industry</th>
                                 <th>Uploaded</th>
                                 <th>Expiry</th>
-                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -514,12 +514,12 @@
                         <thead>
                             <tr>
                                 <th>Document</th>
-                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Project</th>
                                 <th>Expiry Date</th>
                                 <th>Days Left</th>
-                                <th>Parties</th>
-                                <th>Value</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="expiryTableBody">
@@ -560,9 +560,10 @@
                                     <tr>
                                         <th>Document</th>
                                         <th>Alert Type</th>
-                                        <th>Days Before Expiry</th>
-                                        <th>Scheduled For</th>
+                                        <th>Expiry Date</th>
+                                        <th>Days Left</th>
                                         <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="alertsTableBody">
@@ -900,6 +901,29 @@
                 <button class="btn btn-secondary" onclick="closeModal('docDetailModal')">Close</button>
                 <button class="btn btn-primary" id="docDownloadBtn">
                     <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Preview Modal (with chunk/content) -->
+    <div class="modal" id="docPreviewModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-xl">
+            <div class="modal-header">
+                <h3 id="docPreviewTitle"><i class="fas fa-file-alt"></i> Document Preview</h3>
+                <button class="modal-close" onclick="closeModal('docPreviewModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="docPreviewBody">
+                <!-- Preview populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('docPreviewModal')">Close</button>
+                <a class="btn btn-success" id="docPreviewOpenBtn" href="#" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Open in S3
+                </a>
+                <button class="btn btn-primary" id="docPreviewDownloadBtn">
+                    <i class="fas fa-download"></i> Download File
                 </button>
             </div>
         </div>

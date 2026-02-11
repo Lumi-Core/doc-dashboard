@@ -48,22 +48,42 @@ const Expiry = {
         if (!tbody) return;
 
         if (!this.expiryData.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No documents with expiry dates found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No documents with expiry dates found</td></tr>';
             return;
         }
 
         const sorted = [...this.expiryData].sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
-        tbody.innerHTML = sorted.map(doc => {
+        tbody.innerHTML = sorted.map((doc, i) => {
             const days = daysUntil(doc.expiry_date);
+            const docId = doc.id || doc.document_id || '';
             return `<tr>
-                <td>${escapeHtml(truncate(doc.filename || doc.title || 'Untitled', 40))}</td>
+                <td><i class="fas ${getFileIconClass(doc.filename || '')}" style="margin-right:6px;color:var(--gray-500);"></i>${escapeHtml(truncate(doc.filename || doc.title || 'Untitled', 35))}</td>
                 <td>${escapeHtml(snakeToTitle(doc.category || 'N/A'))}</td>
                 <td>${escapeHtml(doc.project || 'N/A')}</td>
                 <td>${formatDateReadable(doc.expiry_date)}</td>
                 <td>${days !== null ? (days < 0 ? `${Math.abs(days)} days ago` : `${days} days`) : 'N/A'}</td>
                 <td><span class="status-badge ${getExpiryStatusClass(days)}">${getExpiryStatusLabel(days)}</span></td>
+                <td>
+                    <button class="btn-icon-sm" onclick="Expiry.previewDoc(${i})" title="Preview"><i class="fas fa-eye"></i></button>
+                    ${docId ? `<button class="btn-icon-sm" onclick="Expiry.downloadDoc('${docId}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
+                </td>
             </tr>`;
         }).join('');
+    },
+
+    previewDoc(index) {
+        const sorted = [...this.expiryData].sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+        const doc = sorted[index];
+        if (doc) {
+            showDocumentPreview(doc, { showContent: false });
+        }
+    },
+
+    downloadDoc(docId) {
+        if (docId) {
+            const url = api.getDocumentDownloadUrl(docId);
+            window.open(url, '_blank');
+        }
     },
 
     exportExpiry() {

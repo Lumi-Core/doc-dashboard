@@ -45,11 +45,15 @@ const Search = {
         }
     },
 
+    searchResults: [], // Store for preview access
+
     renderSearchResults(result) {
         const container = $('searchResults');
         if (!container) return;
 
         const results = result?.results || result?.documents || [];
+        this.searchResults = results; // Store for preview
+        
         if (!results.length) {
             container.innerHTML = '<p class="empty-state">No results found. Try a different query.</p>';
             return;
@@ -60,11 +64,12 @@ const Search = {
             const project = doc.project || doc.metadata?.project || '';
             const industry = doc.industry || doc.metadata?.industry_type || '';
             const snippet = doc.text_snippet || doc.snippet || doc.content || doc.text || '';
+            const docId = doc.id || doc.document_id || doc.metadata?.document_id || '';
             return `
             <div class="search-result-card">
                 <div class="search-result-header">
                     <span class="search-result-rank">#${i + 1}</span>
-                    <h4>${escapeHtml(doc.filename || doc.title || 'Untitled')}</h4>
+                    <h4><i class="fas ${getFileIconClass(doc.filename || '')}" style="margin-right:6px;color:var(--gray-500);"></i>${escapeHtml(doc.filename || doc.title || 'Untitled')}</h4>
                     ${doc.score ? `<span class="search-score">${(doc.score * 100).toFixed(1)}% match</span>` : ''}
                 </div>
                 <div class="search-result-meta">
@@ -74,9 +79,31 @@ const Search = {
                     ${doc.folder_path ? `<span class="meta-tag"><i class="fas fa-folder"></i> ${escapeHtml(doc.folder_path)}</span>` : ''}
                 </div>
                 ${snippet ? `<p class="search-snippet">${escapeHtml(truncate(snippet, 200))}</p>` : ''}
+                <div class="search-result-actions">
+                    <button class="btn btn-sm" onclick="Search.previewResult(${i})" title="Preview with metadata">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    ${docId ? `<button class="btn btn-sm btn-success" onclick="Search.downloadResult('${docId}')" title="Download file">
+                        <i class="fas fa-download"></i> Download
+                    </button>` : ''}
+                </div>
             </div>
         `;
         }).join('');
+    },
+
+    previewResult(index) {
+        const doc = this.searchResults[index];
+        if (doc) {
+            showDocumentPreview(doc, { showContent: true, showScore: true, contentLabel: 'Matched Content Chunk' });
+        }
+    },
+
+    downloadResult(docId) {
+        if (docId) {
+            const url = api.getDocumentDownloadUrl(docId);
+            window.open(url, '_blank');
+        }
     },
 
     async doAsk() {
@@ -103,6 +130,7 @@ const Search = {
         const answer = result?.answer || result?.response || 'No answer available.';
         const sources = result?.sources || result?.documents || [];
 
+        this.askSources = sources; // Store for preview
         container.innerHTML = `
             <div class="ai-answer-box">
                 <div class="ai-answer-header">
@@ -111,11 +139,30 @@ const Search = {
                 <div class="ai-answer-content">${escapeHtml(answer)}</div>
                 ${sources.length ? `
                     <div class="ai-sources">
-                        <strong>Sources:</strong>
-                        <ul>${sources.map(s => `<li>${escapeHtml(s.filename || s.title || 'Document')}</li>`).join('')}</ul>
+                        <strong><i class="fas fa-book"></i> Sources (${sources.length}):</strong>
+                        <ul>${sources.map((s, i) => {
+                            const docId = s.document_id || s.id || '';
+                            return `<li class="source-item">
+                                <i class="fas ${getFileIconClass(s.filename || '')}" style="margin-right:6px;"></i>
+                                ${escapeHtml(s.filename || s.title || 'Document')}
+                                <span class="source-actions">
+                                    <button class="btn-icon-sm" onclick="Search.previewSource(${i})" title="Preview"><i class="fas fa-eye"></i></button>
+                                    ${docId ? `<button class="btn-icon-sm" onclick="Search.downloadResult('${docId}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
+                                </span>
+                            </li>`;
+                        }).join('')}</ul>
                     </div>
                 ` : ''}
             </div>
         `;
+    },
+
+    askSources: [], // Store AI sources for preview
+
+    previewSource(index) {
+        const source = this.askSources[index];
+        if (source) {
+            showDocumentPreview(source, { showContent: true, contentLabel: 'Source Content Snippet' });
+        }
     }
 };

@@ -74,9 +74,12 @@ const Dashboard = {
         `).join('');
     },
 
+    expiringDocs: [], // Store for preview
+
     renderExpiringDocs(expiry) {
         const container = $('expiringDocsPreview');
         if (!container) return;
+        this.expiringDocs = expiry || []; // Store for preview
         if (!expiry || expiry.length === 0) {
             container.innerHTML = '<p class="empty-state">No documents with expiry dates</p>';
             return;
@@ -84,14 +87,19 @@ const Dashboard = {
         const sorted = [...expiry].sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date)).slice(0, 5);
         container.innerHTML = `
             <table class="data-table">
-                <thead><tr><th>Document</th><th>Expiry Date</th><th>Status</th></tr></thead>
+                <thead><tr><th>Document</th><th>Expiry Date</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
-                    ${sorted.map(doc => {
+                    ${sorted.map((doc, i) => {
                         const days = daysUntil(doc.expiry_date);
+                        const docId = doc.id || doc.document_id || '';
                         return `<tr>
-                            <td>${escapeHtml(truncate(doc.filename || doc.title || 'Untitled', 40))}</td>
+                            <td><i class="fas ${getFileIconClass(doc.filename || '')}" style="margin-right:6px;color:var(--gray-500);"></i>${escapeHtml(truncate(doc.filename || doc.title || 'Untitled', 30))}</td>
                             <td>${formatDateReadable(doc.expiry_date)}</td>
                             <td><span class="status-badge ${getExpiryStatusClass(days)}">${getExpiryStatusLabel(days)}</span></td>
+                            <td>
+                                <button class="btn-icon-sm" onclick="Dashboard.previewExpiring(${i})" title="Preview"><i class="fas fa-eye"></i></button>
+                                ${docId ? `<button class="btn-icon-sm" onclick="Dashboard.downloadExpiring('${docId}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
+                            </td>
                         </tr>`;
                     }).join('')}
                 </tbody>
@@ -120,5 +128,20 @@ const Dashboard = {
                 </div>
             `;
         }).join('');
+    },
+
+    previewExpiring(index) {
+        const sorted = [...this.expiringDocs].sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date)).slice(0, 5);
+        const doc = sorted[index];
+        if (doc) {
+            showDocumentPreview(doc, { showContent: false });
+        }
+    },
+
+    downloadExpiring(docId) {
+        if (docId) {
+            const url = api.getDocumentDownloadUrl(docId);
+            window.open(url, '_blank');
+        }
     }
 };
