@@ -89,27 +89,39 @@ const Upload = {
 
     async populateDropdowns() {
         try {
-            const [projects, industries] = await Promise.allSettled([
+            const [projects, industries, categories] = await Promise.allSettled([
                 api.getProjects(),
-                api.getIndustries()
+                api.getIndustries(),
+                api.getCategories()
             ]);
 
             const projectSelect = $('uploadProjectSelect');
-            if (projectSelect && projects.value) {
+            if (projectSelect && projects.status === 'fulfilled' && projects.value) {
                 const projectList = Array.isArray(projects.value) ? projects.value : (projects.value.projects || []);
-                projectSelect.innerHTML = '<option value="">-- Select Project --</option>' +
+                projectSelect.innerHTML = '<option value="">-- Select Project (Required) --</option>' +
                     projectList.map(p => {
+                        const id = typeof p === 'string' ? p : (p.id || p.name || '');
                         const name = typeof p === 'string' ? p : (p.name || p.project_name || '');
-                        return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+                        return `<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`;
                     }).join('');
             }
 
             const industrySelect = $('uploadIndustrySelect');
-            if (industrySelect && industries.value) {
+            if (industrySelect && industries.status === 'fulfilled' && industries.value) {
                 const industryList = Array.isArray(industries.value) ? industries.value : (industries.value.industries || []);
                 industrySelect.innerHTML = '<option value="">-- Auto Detect --</option>' +
                     industryList.map(ind => {
                         const name = typeof ind === 'string' ? ind : (ind.name || '');
+                        return `<option value="${escapeHtml(name)}">${escapeHtml(snakeToTitle(name))}</option>`;
+                    }).join('');
+            }
+
+            const categorySelect = $('uploadCategorySelect');
+            if (categorySelect && categories.status === 'fulfilled' && categories.value) {
+                const categoryList = Array.isArray(categories.value) ? categories.value : (categories.value.categories || []);
+                categorySelect.innerHTML = '<option value="">-- Select Category (Required) --</option>' +
+                    categoryList.map(cat => {
+                        const name = typeof cat === 'string' ? cat : (cat.name || cat.category || '');
                         return `<option value="${escapeHtml(name)}">${escapeHtml(snakeToTitle(name))}</option>`;
                     }).join('');
             }
@@ -125,11 +137,24 @@ const Upload = {
         }
 
         const project = $('uploadProjectSelect')?.value || '';
+        const category = $('uploadCategorySelect')?.value || '';
         const industry = $('uploadIndustrySelect')?.value || '';
+
+        // Validate required fields
+        if (!project) {
+            showToast('Please select a project - this field is required', 'warning');
+            $('uploadProjectSelect')?.focus();
+            return;
+        }
+        if (!category) {
+            showToast('Please select a category - this field is required', 'warning');
+            $('uploadCategorySelect')?.focus();
+            return;
+        }
 
         showLoading('Uploading and processing document...');
         try {
-            const result = await api.uploadFile(this.selectedFile, project, industry);
+            const result = await api.uploadFile(this.selectedFile, project, industry, category);
             hideLoading();
             showToast('Document uploaded and processed successfully!', 'success');
             this.showUploadResult(result);

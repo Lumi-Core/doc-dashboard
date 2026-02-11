@@ -116,11 +116,12 @@ class ApiService {
     /**
      * Upload a file with multipart/form-data
      */
-    async uploadFile(file, projectId = '', industryType = '') {
+    async uploadFile(file, projectId = '', industryType = '', category = '') {
         const formData = new FormData();
         formData.append('file', file);
         if (projectId) formData.append('project_id', projectId);
         if (industryType) formData.append('industry_type', industryType);
+        if (category) formData.append('category', category);
         if (this.currentCompanyId) formData.append('company_id', this.currentCompanyId);
 
         const response = await this.fetchWithTimeout(`${this.baseUrl}/upload`, {
