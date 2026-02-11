@@ -52,11 +52,11 @@ const Alerts = {
 
         tbody.innerHTML = this.alertsData.map(alert => `
             <tr>
-                <td>${escapeHtml(truncate(alert.filename || alert.document || 'Untitled', 40))}</td>
-                <td>${escapeHtml(snakeToTitle(alert.category || alert.type || 'N/A'))}</td>
-                <td>${formatDateReadable(alert.expiry_date || alert.date)}</td>
+                <td>${escapeHtml(truncate(alert.filename || alert.document_id || alert.document || 'Untitled', 40))}</td>
+                <td>${escapeHtml(snakeToTitle(alert.alert_type || alert.category || alert.type || 'N/A'))}</td>
+                <td>${formatDateReadable(alert.expiry_date || alert.created_at || alert.date)}</td>
                 <td>${alert.days_until !== undefined ? alert.days_until + ' days' : (alert.expiry_date ? daysUntil(alert.expiry_date) + ' days' : 'N/A')}</td>
-                <td><span class="status-badge ${getExpiryStatusClass(alert.days_until ?? daysUntil(alert.expiry_date))}">${alert.severity || getExpiryStatusLabel(alert.days_until ?? daysUntil(alert.expiry_date))}</span></td>
+                <td><span class="status-badge ${getExpiryStatusClass(alert.days_until ?? daysUntil(alert.expiry_date))}">${alert.severity || alert.status || getExpiryStatusLabel(alert.days_until ?? daysUntil(alert.expiry_date))}</span></td>
             </tr>
         `).join('');
     },
@@ -99,7 +99,7 @@ const Alerts = {
     async testEmail() {
         showLoading('Sending test email...');
         try {
-            const result = await api.testEmail();
+            const result = await api.sendTestEmail();
             hideLoading();
             showToast(result.message || 'Test email sent!', 'success');
         } catch (err) {

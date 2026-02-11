@@ -26,6 +26,8 @@ const Projects = {
             const result = await api.getProjects();
             this.allProjects = Array.isArray(result) ? result : (result.projects || []);
             this.renderProjects();
+            const count = $('projectsCount');
+            if (count) count.textContent = this.allProjects.length;
         } catch (err) {
             console.error('Projects load error:', err);
             showToast('Failed to load projects', 'error');
@@ -43,23 +45,26 @@ const Projects = {
 
         grid.innerHTML = this.allProjects.map(project => {
             const name = typeof project === 'string' ? project : (project.name || project.project_name || '');
+            const projectId = typeof project === 'object' ? (project.id || '') : '';
             const docCount = typeof project === 'object' ? (project.document_count || project.doc_count || 0) : '';
             const created = typeof project === 'object' ? (project.created_at || '') : '';
+            const industry = typeof project === 'object' ? (project.industry_type || '') : '';
 
             return `
                 <div class="project-card">
                     <div class="project-card-header">
                         <h3><i class="fas fa-folder"></i> ${escapeHtml(name)}</h3>
-                        <button class="btn-icon danger" title="Delete Project" onclick="Projects.confirmDelete('${escapeHtml(name)}')">
+                        <button class="btn-icon danger" title="Delete Project" onclick="Projects.confirmDelete('${escapeHtml(projectId)}', '${escapeHtml(name)}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                     <div class="project-card-body">
+                        ${industry ? `<div class="project-stat"><i class="fas fa-industry"></i> ${escapeHtml(snakeToTitle(industry))}</div>` : ''}
                         ${docCount !== '' ? `<div class="project-stat"><i class="fas fa-file-alt"></i> ${docCount} documents</div>` : ''}
                         ${created ? `<div class="project-stat"><i class="fas fa-calendar"></i> Created ${formatDateReadable(created)}</div>` : ''}
                     </div>
                     <div class="project-card-footer">
-                        <button class="btn btn-sm" onclick="Projects.viewProjectDocs('${escapeHtml(name)}')">
+                        <button class="btn btn-sm" onclick="Projects.viewProjectDocs('${escapeHtml(projectId)}')">
                             <i class="fas fa-eye"></i> View Documents
                         </button>
                     </div>
@@ -93,7 +98,7 @@ const Projects = {
         }
     },
 
-    confirmDelete(projectName) {
+    confirmDelete(projectId, projectName) {
         const body = $('confirmModalBody');
         const confirmBtn = $('confirmModalAction');
         if (body) body.innerHTML = `Are you sure you want to delete project <strong>${escapeHtml(projectName)}</strong>?`;
@@ -101,7 +106,7 @@ const Projects = {
             confirmBtn.onclick = async () => {
                 closeModal('confirmModal');
                 try {
-                    await api.deleteProject(projectName);
+                    await api.deleteProject(projectId);
                     showToast(`Project "${projectName}" deleted`, 'success');
                     this.loadData();
                 } catch (err) {
@@ -112,9 +117,24 @@ const Projects = {
         openModal('confirmModal');
     },
 
-    viewProjectDocs(projectName) {
-        // Navigate to documents page and filter by project
-        App.navigateTo('documents');
+    viewProjectDocs(projectId) {
+        // Navigate to documents page filtered by project
+        if (projectId) {
+            App.navigateTo('documents');
+            // After navigation, filter documents by project
+            setTimeout(async () => {
+                try {
+                    const result = await api.getProjectDocumentsFlat(projectId);
+                    const docs = Array.isArray(result) ? result : (result.documents || []);
+                    Documents.allDocuments = docs;
+                    Documents.applyFilter();
+                } catch (err) {
+                    console.error('Failed to load project documents:', err);
+                }
+            }, 100);
+        } else {
+            App.navigateTo('documents');
+        }
     },
 
     async populateIndustryDropdown() {

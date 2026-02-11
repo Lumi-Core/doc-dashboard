@@ -55,7 +55,12 @@ const Search = {
             return;
         }
 
-        container.innerHTML = results.map((doc, i) => `
+        container.innerHTML = results.map((doc, i) => {
+            const category = doc.category || doc.document_type || doc.metadata?.category || '';
+            const project = doc.project || doc.metadata?.project || '';
+            const industry = doc.industry || doc.metadata?.industry_type || '';
+            const snippet = doc.text_snippet || doc.snippet || doc.content || doc.text || '';
+            return `
             <div class="search-result-card">
                 <div class="search-result-header">
                     <span class="search-result-rank">#${i + 1}</span>
@@ -63,13 +68,15 @@ const Search = {
                     ${doc.score ? `<span class="search-score">${(doc.score * 100).toFixed(1)}% match</span>` : ''}
                 </div>
                 <div class="search-result-meta">
-                    ${doc.category ? `<span class="status-badge">${escapeHtml(snakeToTitle(doc.category))}</span>` : ''}
-                    ${doc.project ? `<span class="meta-tag"><i class="fas fa-project-diagram"></i> ${escapeHtml(doc.project)}</span>` : ''}
-                    ${doc.industry ? `<span class="meta-tag"><i class="fas fa-industry"></i> ${escapeHtml(snakeToTitle(doc.industry))}</span>` : ''}
+                    ${category ? `<span class="status-badge">${escapeHtml(snakeToTitle(category))}</span>` : ''}
+                    ${project ? `<span class="meta-tag"><i class="fas fa-project-diagram"></i> ${escapeHtml(project)}</span>` : ''}
+                    ${industry ? `<span class="meta-tag"><i class="fas fa-industry"></i> ${escapeHtml(snakeToTitle(industry))}</span>` : ''}
+                    ${doc.folder_path ? `<span class="meta-tag"><i class="fas fa-folder"></i> ${escapeHtml(doc.folder_path)}</span>` : ''}
                 </div>
-                ${doc.snippet || doc.content ? `<p class="search-snippet">${escapeHtml(truncate(doc.snippet || doc.content, 200))}</p>` : ''}
+                ${snippet ? `<p class="search-snippet">${escapeHtml(truncate(snippet, 200))}</p>` : ''}
             </div>
-        `).join('');
+        `;
+        }).join('');
     },
 
     async doAsk() {

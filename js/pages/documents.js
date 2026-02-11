@@ -43,10 +43,16 @@ const Documents = {
             const result = await api.getDocuments();
             this.allDocuments = Array.isArray(result) ? result : (result.documents || []);
             this.applyFilter();
+            this.updateDocCount();
         } catch (err) {
             console.error('Documents load error:', err);
             showToast('Failed to load documents', 'error');
         }
+    },
+
+    updateDocCount() {
+        const count = $('documentsCount');
+        if (count) count.textContent = this.allDocuments.length;
     },
 
     applyFilter() {
@@ -86,7 +92,8 @@ const Documents = {
         }
 
         tbody.innerHTML = pageData.map(doc => {
-            const days = doc.expiry_date ? daysUntil(doc.expiry_date) : null;
+            const expiryDate = doc.expiry_date || doc.metadata?.expiry_date || null;
+            const days = expiryDate ? daysUntil(expiryDate) : null;
             return `<tr>
                 <td>
                     <div class="doc-name">
@@ -95,10 +102,10 @@ const Documents = {
                     </div>
                 </td>
                 <td><span class="status-badge">${escapeHtml(snakeToTitle(doc.category || 'N/A'))}</span></td>
-                <td>${escapeHtml(doc.project || 'N/A')}</td>
-                <td>${escapeHtml(snakeToTitle(doc.industry || 'N/A'))}</td>
-                <td>${formatDateReadable(doc.upload_date || doc.created_at)}</td>
-                <td>${doc.expiry_date ? `<span class="status-badge ${getExpiryStatusClass(days)}">${formatDateReadable(doc.expiry_date)}</span>` : 'N/A'}</td>
+                <td>${escapeHtml(doc.project || doc.metadata?.project || 'N/A')}</td>
+                <td>${escapeHtml(snakeToTitle(doc.industry || doc.metadata?.industry_type || 'N/A'))}</td>
+                <td>${formatDateReadable(doc.upload_date || doc.created_at || doc.metadata?.upload_date)}</td>
+                <td>${(doc.expiry_date || doc.metadata?.expiry_date) ? `<span class="status-badge ${getExpiryStatusClass(days)}">${formatDateReadable(doc.expiry_date || doc.metadata?.expiry_date)}</span>` : 'N/A'}</td>
                 <td class="actions-cell">
                     <button class="btn-icon" title="View Details" onclick="Documents.viewDocument('${doc.id || doc.document_id || ''}')"><i class="fas fa-eye"></i></button>
                     <button class="btn-icon" title="Download" onclick="Documents.downloadDocument('${doc.id || doc.document_id || ''}', '${escapeHtml(doc.filename || '')}')"><i class="fas fa-download"></i></button>
@@ -149,10 +156,10 @@ const Documents = {
                     <div class="detail-grid">
                         <div class="detail-item"><span class="detail-label">Filename</span><span class="detail-value">${escapeHtml(doc.filename || '')}</span></div>
                         <div class="detail-item"><span class="detail-label">Category</span><span class="detail-value">${escapeHtml(snakeToTitle(doc.category || 'N/A'))}</span></div>
-                        <div class="detail-item"><span class="detail-label">Industry</span><span class="detail-value">${escapeHtml(snakeToTitle(doc.industry || 'N/A'))}</span></div>
-                        <div class="detail-item"><span class="detail-label">Project</span><span class="detail-value">${escapeHtml(doc.project || 'N/A')}</span></div>
-                        <div class="detail-item"><span class="detail-label">Upload Date</span><span class="detail-value">${formatDateReadable(doc.upload_date || doc.created_at)}</span></div>
-                        <div class="detail-item"><span class="detail-label">Expiry Date</span><span class="detail-value">${doc.expiry_date ? formatDateReadable(doc.expiry_date) : 'N/A'}</span></div>
+                        <div class="detail-item"><span class="detail-label">Industry</span><span class="detail-value">${escapeHtml(snakeToTitle(doc.industry || doc.metadata?.industry_type || 'N/A'))}</span></div>
+                        <div class="detail-item"><span class="detail-label">Project</span><span class="detail-value">${escapeHtml(doc.project || doc.metadata?.project || 'N/A')}</span></div>
+                        <div class="detail-item"><span class="detail-label">Upload Date</span><span class="detail-value">${formatDateReadable(doc.upload_date || doc.created_at || doc.metadata?.upload_date)}</span></div>
+                        <div class="detail-item"><span class="detail-label">Expiry Date</span><span class="detail-value">${(doc.expiry_date || doc.metadata?.expiry_date) ? formatDateReadable(doc.expiry_date || doc.metadata?.expiry_date) : 'N/A'}</span></div>
                         ${doc.summary ? `<div class="detail-item full-width"><span class="detail-label">AI Summary</span><span class="detail-value">${escapeHtml(doc.summary)}</span></div>` : ''}
                         ${doc.s3_url ? `<div class="detail-item full-width"><span class="detail-label">Storage URL</span><span class="detail-value"><a href="${doc.s3_url}" target="_blank">Open in S3</a></span></div>` : ''}
                     </div>
@@ -166,12 +173,8 @@ const Documents = {
 
     async downloadDocument(docId, filename) {
         try {
-            const result = await api.downloadDocument(docId);
-            if (result && result.url) {
-                window.open(result.url, '_blank');
-            } else {
-                showToast('Download URL not available', 'warning');
-            }
+            const url = api.getDocumentDownloadUrl(docId);
+            window.open(url, '_blank');
         } catch (err) {
             showToast('Download failed: ' + (err.message || ''), 'error');
         }

@@ -5,11 +5,22 @@
 
 class ApiService {
     constructor() {
-        // Auto-detect API URL: use local if running on localhost, otherwise use production
-        const defaultUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://127.0.0.1:8001'
-            : 'https://docagent-production.up.railway.app';
-        this.baseUrl = localStorage.getItem('apiBaseUrl') || defaultUrl;
+        // Auto-detect API URL based on hosting context
+        const saved = localStorage.getItem('apiBaseUrl');
+        if (saved) {
+            this.baseUrl = saved;
+        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Local development — backend on same host, port 8001 or 8000
+            this.baseUrl = window.location.port === '8000'
+                ? window.location.origin  // served by FastAPI on 8000
+                : 'http://127.0.0.1:8001';
+        } else if (window.location.hostname.includes('github.io')) {
+            // GitHub Pages — always use Railway backend
+            this.baseUrl = 'https://docagent-production.up.railway.app';
+        } else {
+            // Railway or other hosting — API is same origin
+            this.baseUrl = window.location.origin;
+        }
         this.currentCompanyId = localStorage.getItem('currentCompanyId') || 'default';
     }
 

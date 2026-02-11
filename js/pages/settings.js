@@ -39,8 +39,9 @@ const Settings = {
         if (!isValidUrl(url)) { showToast('Please enter a valid URL', 'warning'); return; }
 
         api.baseUrl = url;
-        localStorage.setItem('api_base_url', url);
-        showToast('API URL saved', 'success');
+        localStorage.setItem('apiBaseUrl', url);
+        showToast('API URL saved. Refreshing...', 'success');
+        setTimeout(() => window.location.reload(), 1000);
     },
 
     async loadSystemInfo() {

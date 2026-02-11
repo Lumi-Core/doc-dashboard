@@ -147,15 +147,17 @@ const Upload = {
         if (card) card.classList.remove('hidden');
         container.innerHTML = `
             <div class="card">
-                <div class="card-header"><h3><i class="fas fa-check-circle" style="color: #10b981;"></i> Upload Successful</h3></div>
+                <div class="card-header"><h3><i class="fas fa-check-circle" style="color: #10b981;"></i> Upload ${escapeHtml(result.status === 'duplicate' ? 'Duplicate Detected' : 'Successful')}</h3></div>
                 <div class="card-body">
                     <div class="result-grid">
-                        <div class="result-item"><span class="result-label">Filename</span><span class="result-value">${escapeHtml(result.filename || result.original_filename || '')}</span></div>
+                        <div class="result-item"><span class="result-label">Document ID</span><span class="result-value">${escapeHtml(result.document_id || '')}</span></div>
                         <div class="result-item"><span class="result-label">Category</span><span class="result-value">${escapeHtml(result.category || 'N/A')}</span></div>
-                        <div class="result-item"><span class="result-label">Industry</span><span class="result-value">${escapeHtml(result.industry || 'N/A')}</span></div>
-                        <div class="result-item"><span class="result-label">Project</span><span class="result-value">${escapeHtml(result.project || 'N/A')}</span></div>
-                        ${result.expiry_date ? `<div class="result-item"><span class="result-label">Expiry Date</span><span class="result-value">${formatDateReadable(result.expiry_date)}</span></div>` : ''}
+                        <div class="result-item"><span class="result-label">Document Type</span><span class="result-value">${escapeHtml(result.document_type || 'N/A')}</span></div>
+                        <div class="result-item"><span class="result-label">Folder Path</span><span class="result-value">${escapeHtml(result.suggested_folder_path || 'N/A')}</span></div>
+                        ${result.classification_confidence ? `<div class="result-item"><span class="result-label">Confidence</span><span class="result-value">${(result.classification_confidence * 100).toFixed(1)}%</span></div>` : ''}
+                        ${result.needs_review ? `<div class="result-item"><span class="result-label">Review</span><span class="result-value status-badge warning">Needs Review</span></div>` : ''}
                         ${result.summary ? `<div class="result-item full-width"><span class="result-label">AI Summary</span><span class="result-value">${escapeHtml(result.summary)}</span></div>` : ''}
+                        ${result.message ? `<div class="result-item full-width"><span class="result-label">Status</span><span class="result-value">${escapeHtml(result.message)}</span></div>` : ''}
                     </div>
                 </div>
             </div>

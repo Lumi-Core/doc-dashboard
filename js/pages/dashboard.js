@@ -17,23 +17,32 @@ const Dashboard = {
                 api.getCategories()
             ]);
 
-            this.renderStats(stats.value, expiry.value, categories.value);
-            this.renderHealth(health.value);
-            this.renderExpiringDocs(expiry.value);
-            this.renderCategoryBreakdown(categories.value);
+            const healthVal = health.status === 'fulfilled' ? health.value : null;
+            const statsVal = stats.status === 'fulfilled' ? stats.value : null;
+            const expiryVal = expiry.status === 'fulfilled' ? expiry.value : null;
+            const catVal = categories.status === 'fulfilled' ? categories.value : null;
+
+            // /db/expiry-table returns { documents: [...] }, extract the array
+            const expiryDocs = expiryVal?.documents || (Array.isArray(expiryVal) ? expiryVal : []);
+
+            this.renderStats(statsVal, expiryDocs, catVal);
+            this.renderHealth(healthVal);
+            this.renderExpiringDocs(expiryDocs);
+            this.renderCategoryBreakdown(catVal);
         } catch (err) {
             console.error('Dashboard load error:', err);
             showToast('Failed to load dashboard data', 'error');
         }
     },
 
-    renderStats(stats, expiry, categories) {
+    renderStats(stats, expiryDocs, categories) {
         const totalDocs = stats?.total_documents ?? 0;
-        const totalCategories = categories?.length ?? 0;
-        const expiringDocs = expiry?.filter(d => {
+        const catList = categories?.categories || categories;
+        const totalCategories = Array.isArray(catList) ? catList.length : 0;
+        const expiringDocs = Array.isArray(expiryDocs) ? expiryDocs.filter(d => {
             const days = daysUntil(d.expiry_date);
             return days !== null && days >= 0 && days <= 30;
-        })?.length ?? 0;
+        }).length : 0;
         const totalProjects = stats?.total_projects ?? 0;
 
         const el = (id, val) => { const e = $(id); if (e) e.textContent = formatNumber(val); };
@@ -93,12 +102,14 @@ const Dashboard = {
     renderCategoryBreakdown(categories) {
         const container = $('categoryBreakdown');
         if (!container) return;
-        if (!categories || categories.length === 0) {
+        // /categories returns { categories: [...] } or plain array
+        const catList = categories?.categories || (Array.isArray(categories) ? categories : []);
+        if (!catList || catList.length === 0) {
             container.innerHTML = '<p class="empty-state">No categories found</p>';
             return;
         }
         const colors = ['#dc2626', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-        container.innerHTML = categories.slice(0, 8).map((cat, i) => {
+        container.innerHTML = catList.slice(0, 8).map((cat, i) => {
             const name = typeof cat === 'string' ? cat : (cat.category || cat.name || 'Unknown');
             const count = typeof cat === 'object' ? (cat.count || 0) : '';
             return `
