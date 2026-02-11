@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Document Management Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>DocAgent</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-menu">
+            <ul class="nav-list">
+                <li class="nav-item active" data-page="dashboard">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="upload">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Upload</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="documents">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Documents</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="search">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-search"></i>
+                        <span>Search & Ask AI</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="projects">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>Projects</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="expiry">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-calendar-times"></i>
+                        <span>Expiry Tracker</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="alerts">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-bell"></i>
+                        <span>Alerts & Email</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="analytics">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics Insights</span>
+                    </a>
+                </li>
+                <li class="nav-item" data-page="settings">
+                    <a href="javascript:void(0)">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="health-indicator" id="healthIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <span class="breadcrumb" id="breadcrumb">Home / Dashboard</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="company-selector">
+                    <i class="fas fa-building"></i>
+                    <select id="companySelect" class="company-select">
+                        <option value="default">Default Company</option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Quick search documents..." id="globalSearch">
+                </div>
+                <button class="btn btn-icon" id="refreshBtn" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn btn-icon" id="notificationBtn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                <div class="user-menu">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=dc2626&color=fff" alt="User" class="avatar">
+                    <span>Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content Container -->
+        <div class="page-content" id="pageContent">
+
+            <!-- ============================================================ -->
+            <!-- DASHBOARD PAGE -->
+            <!-- ============================================================ -->
+            <section class="page" id="page-dashboard">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-total-docs">0</h3>
+                            <p>Total Documents</p>
+                        </div>
+                        <div class="stat-trend up">
+                            <i class="fas fa-database"></i>
+                            <span>ChromaDB</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-categories">0</h3>
+                            <p>Categories</p>
+                        </div>
+                        <div class="stat-trend up">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Types</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-expiring">0</h3>
+                            <p>Expiring Soon</p>
+                        </div>
+                        <div class="stat-trend down">
+                            <i class="fas fa-calendar-times"></i>
+                            <span>30 Days</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-projects">0</h3>
+                            <p>Active Projects</p>
+                        </div>
+                        <div class="stat-trend">
+                            <i class="fas fa-industry"></i>
+                            <span>All</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-card wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-heartbeat" style="color: var(--primary); margin-right: 8px;"></i>System Health</h3>
+                            <button class="btn btn-sm" id="refreshHealthBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="health-grid" id="healthGrid">
+                            <!-- Health items populated by JS -->
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn" onclick="App.navigateTo('upload')">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Upload Document</span>
+                            </button>
+                            <button class="action-btn" onclick="App.navigateTo('search')">
+                                <i class="fas fa-robot"></i>
+                                <span>Ask AI a Question</span>
+                            </button>
+                            <button class="action-btn" onclick="App.navigateTo('projects')">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Create Project</span>
+                            </button>
+                            <button class="action-btn" id="sendExpiryAlertsBtn">
+                                <i class="fas fa-envelope"></i>
+                                <span>Send Expiry Alerts</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock" style="color: var(--warning); margin-right: 8px;"></i>Expiring Documents</h3>
+                            <a href="#expiry" class="link">View All</a>
+                        </div>
+                        <div class="today-posts" id="expiringDocsPreview">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-pie" style="color: var(--info); margin-right: 8px;"></i>Category Breakdown</h3>
+                        </div>
+                        <div class="category-breakdown" id="categoryBreakdown" style="padding: 24px;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- UPLOAD PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-upload">
+                <div class="workflow-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-cloud-upload-alt" style="color: var(--primary); margin-right: 8px;"></i>Upload Document</h3>
+                        </div>
+                        <form id="uploadForm" class="workflow-form">
+                            <div class="form-group">
+                                <label>Select File</label>
+                                <div class="file-upload-area" id="uploadArea">
+                                    <input type="file" name="file" id="uploadFileInput" class="file-input" accept=".pdf,.png,.jpg,.jpeg,.gif,.bmp,.tiff,.doc,.docx,.txt">
+                                    <label for="uploadFileInput" class="file-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span class="file-text">Click to upload or drag & drop</span>
+                                        <span class="file-hint">PDF, Images, DOC, TXT (max 50MB)</span>
+                                    </label>
+                                    <div class="file-preview" id="uploadPreview"></div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Project (Optional)</label>
+                                    <div class="input-with-button">
+                                        <select name="project_id" id="uploadProjectSelect" class="form-control">
+                                            <option value="">-- Select Project --</option>
+                                        </select>
+                                        <button type="button" class="btn btn-secondary btn-icon" id="createProjectBtn" title="Create New Project">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Industry Type (Optional)</label>
+                                    <div class="input-with-button">
+                                        <select name="industry_type" id="uploadIndustrySelect" class="form-control">
+                                            <option value="">-- Auto Detect --</option>
+                                        </select>
+                                        <button type="button" class="btn btn-secondary btn-icon" id="createIndustryBtn" title="Add Custom Industry">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg" id="uploadSubmitBtn">
+                                    <i class="fas fa-upload"></i> Upload & Process
+                                </button>
+                                <button type="reset" class="btn btn-secondary">Clear</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-info-circle" style="color: var(--info); margin-right: 8px;"></i>How It Works</h3>
+                        </div>
+                        <div class="workflow-controls">
+                            <div class="control-item">
+                                <h4>1. Upload</h4>
+                                <p>Your document is stored securely in S3 cloud storage</p>
+                            </div>
+                            <div class="control-item">
+                                <h4>2. OCR & Read</h4>
+                                <p>AI extracts text using GPT-4o Vision (even from scans)</p>
+                            </div>
+                            <div class="control-item">
+                                <h4>3. Classify & Extract</h4>
+                                <p>AI identifies document type, extracts key data (dates, parties, values)</p>
+                            </div>
+                            <div class="control-item">
+                                <h4>4. Organize & Index</h4>
+                                <p>Filed into correct folder, indexed for semantic search, expiry tracked</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Result -->
+                <div class="card mt-4 hidden" id="uploadResultCard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-check-circle" style="color: var(--success); margin-right: 8px;"></i>Processing Result</h3>
+                    </div>
+                    <div class="workflow-status" id="uploadResult">
+                        <!-- Result populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- DOCUMENTS PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-documents">
+                <div class="page-header">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refreshDocuments">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn btn-secondary" id="exportDocuments">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="calendar-tabs">
+                    <button class="tab-btn active" data-filter="all">All Documents</button>
+                    <button class="tab-btn" data-filter="contract">Contracts</button>
+                    <button class="tab-btn" data-filter="invoice">Invoices</button>
+                    <button class="tab-btn" data-filter="permit">Permits</button>
+                    <button class="tab-btn" data-filter="report">Reports</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="documentsTable">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Uploaded</th>
+                                <th>Expiry</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTableBody">
+                            <!-- Data populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span class="showing-info" id="docsShowingInfo">Showing 0 documents</span>
+                    <div class="pagination" id="docsPagination"></div>
+                </div>
+                <div class="empty-state hidden" id="documentsEmpty">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No Documents Found</h3>
+                    <p>Upload your first document to get started</p>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- SEARCH & ASK AI PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-search">
+                <div class="workflow-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-search" style="color: var(--primary); margin-right: 8px;"></i>Semantic Search</h3>
+                        </div>
+                        <div class="workflow-form">
+                            <div class="form-group">
+                                <label>Search Query</label>
+                                <div class="inline-form">
+                                    <input type="text" id="searchQuery" class="form-control" placeholder="e.g., payment terms in construction contracts">
+                                    <button class="btn btn-primary" id="searchBtn">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="searchResults" class="mt-4">
+                                <p class="text-muted text-center">Enter a query to search across all documents</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-robot" style="color: #a855f7; margin-right: 8px;"></i>Ask AI (RAG)</h3>
+                        </div>
+                        <div class="workflow-form">
+                            <div class="form-group">
+                                <label>Ask a Question</label>
+                                <div class="inline-form">
+                                    <input type="text" id="askQuery" class="form-control" placeholder="e.g., What are the payment terms in the Acme contract?">
+                                    <button class="btn btn-primary" id="askBtn" style="background: #a855f7;">
+                                        <i class="fas fa-paper-plane"></i> Ask
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="askResult" class="mt-4">
+                                <p class="text-muted text-center">Ask any question about your document library</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- PROJECTS PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-projects">
+                <div class="page-header">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="createProjectBtn">
+                            <i class="fas fa-plus"></i> New Project
+                        </button>
+                        <button class="btn btn-secondary" id="refreshProjects">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="approvals-grid" id="projectsGrid">
+                    <!-- Project cards populated by JS -->
+                </div>
+                <div class="empty-state hidden" id="projectsEmpty">
+                    <i class="fas fa-project-diagram"></i>
+                    <h3>No Projects Yet</h3>
+                    <p>Create your first project with industry-specific folder structures</p>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- EXPIRY TRACKER PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-expiry">
+                <div class="page-header">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refreshExpiry">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn btn-success" id="sendAlertsBtn">
+                            <i class="fas fa-envelope"></i> Send Alerts
+                        </button>
+                        <button class="btn btn-secondary" id="exportExpiry">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expiry Stats -->
+                <div class="metrics-overview" id="expiryStats">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(239,68,68,0.15); color: var(--danger);"><i class="fas fa-fire"></i></div>
+                        <div class="metric-value" id="expiry-overdue">0</div>
+                        <div class="metric-label">Overdue</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="metric-value" id="expiry-7days">0</div>
+                        <div class="metric-label">Next 7 Days</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--primary);"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="metric-value" id="expiry-30days">0</div>
+                        <div class="metric-label">Next 30 Days</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(34,197,94,0.15); color: var(--success);"><i class="fas fa-check-circle"></i></div>
+                        <div class="metric-value" id="expiry-total">0</div>
+                        <div class="metric-label">Total Tracked</div>
+                    </div>
+                </div>
+
+                <div class="table-container mt-4">
+                    <table class="data-table" id="expiryTable">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Expiry Date</th>
+                                <th>Days Left</th>
+                                <th>Parties</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiryTableBody">
+                            <!-- Data populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state hidden" id="expiryEmpty">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>No Expiring Documents</h3>
+                    <p>Documents with expiry dates will be tracked here automatically</p>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- ALERTS & EMAIL PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-alerts">
+                <div class="page-header">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refreshAlerts">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn btn-success" id="processAlertsBtn">
+                            <i class="fas fa-paper-plane"></i> Process Pending Alerts
+                        </button>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bell" style="color: var(--warning); margin-right: 8px;"></i>Pending Alerts</h3>
+                        </div>
+                        <div class="table-container" style="box-shadow:none;">
+                            <table class="data-table" id="alertsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Document</th>
+                                        <th>Alert Type</th>
+                                        <th>Days Before Expiry</th>
+                                        <th>Scheduled For</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertsTableBody">
+                                    <!-- Data populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-envelope" style="color: var(--info); margin-right: 8px;"></i>Email Status</h3>
+                        </div>
+                        <div id="emailStatusDisplay" style="padding: 20px;">
+                            <!-- Email status populated by JS -->
+                        </div>
+                        <div style="padding: 0 20px 20px;">
+                            <button class="btn btn-info btn-lg" id="sendTestEmailBtn" style="width: 100%;">
+                                <i class="fas fa-paper-plane"></i> Send Test Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- SETTINGS PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-settings">
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-link" style="color: var(--primary); margin-right: 8px;"></i>API Configuration</h3>
+                        </div>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label>API Base URL</label>
+                                <input type="url" id="apiBaseUrl" class="form-control" value="">
+                                <small>The URL of your Document Management API backend</small>
+                            </div>
+                            <button class="btn btn-primary" id="saveApiSettings">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-building" style="color: var(--primary); margin-right: 8px;"></i>Company Management</h3>
+                        </div>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label>Add New Company</label>
+                                <div class="inline-form">
+                                    <input type="text" id="newCompanyName" class="form-control" placeholder="Company name">
+                                    <button class="btn btn-primary" id="addCompanyBtn">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Description (optional)</label>
+                                <input type="text" id="newCompanyDesc" class="form-control" placeholder="Company description">
+                            </div>
+                            <div id="companiesList" class="mt-4">
+                                <!-- Companies list populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-server" style="color: var(--info); margin-right: 8px;"></i>System Information</h3>
+                            <button class="btn btn-sm" id="refreshSystemInfo">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="system-info" id="systemInfo">
+                            <!-- System info populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-database" style="color: var(--success); margin-right: 8px;"></i>Database Stats</h3>
+                            <button class="btn btn-sm" id="refreshDBStats">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="config-display" id="dbStatsDisplay">
+                            <!-- DB stats populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-industry" style="color: #a855f7; margin-right: 8px;"></i>Supported Industries</h3>
+                        </div>
+                        <div class="config-display" id="industriesDisplay">
+                            <!-- Industries populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-trash-alt" style="color: var(--danger); margin-right: 8px;"></i>Danger Zone</h3>
+                        </div>
+                        <div class="settings-form">
+                            <p style="color: var(--gray-500); margin-bottom: 16px;">These actions cannot be undone. Proceed with caution.</p>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <button class="btn btn-danger" id="clearCompanyDataBtn">
+                                    <i class="fas fa-eraser"></i> Clear Current Company Data
+                                </button>
+                                <button class="btn btn-danger" id="clearAllDBBtn">
+                                    <i class="fas fa-database"></i> Clear Entire Database
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- ANALYTICS INSIGHTS PAGE -->
+            <!-- ============================================================ -->
+            <section class="page hidden" id="page-analytics">
+                <div class="page-header">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refreshAnalytics">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analytics Stats -->
+                <div class="metrics-overview" id="analyticsStats">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--primary);"><i class="fas fa-file-alt"></i></div>
+                        <div class="metric-value" id="analytics-total">0</div>
+                        <div class="metric-label">Total Documents</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(34,197,94,0.15); color: var(--success);"><i class="fas fa-check-circle"></i></div>
+                        <div class="metric-value" id="analytics-indexed">0</div>
+                        <div class="metric-label">Indexed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);"><i class="fas fa-eye"></i></div>
+                        <div class="metric-value" id="analytics-review">0</div>
+                        <div class="metric-label">Needs Review</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(239,68,68,0.15); color: var(--danger);"><i class="fas fa-clock"></i></div>
+                        <div class="metric-value" id="analytics-expired">0</div>
+                        <div class="metric-label">Expired</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: rgba(168,85,247,0.15); color: #a855f7;"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="metric-value" id="analytics-expiring30">0</div>
+                        <div class="metric-label">Expiring (30d)</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-card wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-line" style="color: var(--primary); margin-right: 8px;"></i>Upload Trend (Last 30 Days)</h3>
+                        </div>
+                        <div id="uploadTrendChart" class="chart-container" style="padding: 20px; min-height: 200px;">
+                            <!-- Chart populated by JS -->
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-pie" style="color: var(--info); margin-right: 8px;"></i>By Category</h3>
+                        </div>
+                        <div id="categoryChart" style="padding: 20px;">
+                            <!-- Chart populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-row mt-4">
+                    <div class="chart-card wide">
+                        <div class="card-header">
+                            <h3><i class="fas fa-tags" style="color: var(--success); margin-right: 8px;"></i>Document Types Breakdown</h3>
+                        </div>
+                        <div id="typeBreakdown" style="padding: 20px;">
+                            <!-- Type breakdown populated by JS -->
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-network-wired" style="color: var(--warning); margin-right: 8px;"></i>Connection Stats</h3>
+                        </div>
+                        <div id="connectionStats" style="padding: 20px;">
+                            <!-- Connection stats populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Create Project Modal -->
+    <div class="modal" id="projectModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button class="modal-close" id="closeProjectModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label>Project Name *</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g., Office Renovation" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Industry Type *</label>
+                        <select name="industry_type" class="form-control" required id="projectIndustrySelect">
+                            <option value="">Select Industry...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Optional project description"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelProjectModal">Cancel</button>
+                <button class="btn btn-primary" id="saveProject">
+                    <i class="fas fa-plus"></i> Create Project
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="modal" id="createProjectModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-project-diagram"></i> Create New Project</h3>
+                <button class="modal-close" onclick="closeModal('createProjectModal')">&times;</button>
+            </div>
+            <form id="createProjectForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newProjectName">Project Name *</label>
+                        <input type="text" id="newProjectName" class="form-control" placeholder="e.g., Downtown Development 2024" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newProjectDescription">Description</label>
+                        <textarea id="newProjectDescription" class="form-control" rows="3" placeholder="Optional project description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="newProjectIndustry">Industry Type *</label>
+                        <select id="newProjectIndustry" class="form-control" required>
+                            <option value="">-- Select Industry --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createProjectModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Industry Modal -->
+    <div class="modal" id="createIndustryModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-industry"></i> Add Custom Industry</h3>
+                <button class="modal-close" onclick="closeModal('createIndustryModal')">&times;</button>
+            </div>
+            <form id="createIndustryForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newIndustryName">Industry Name *</label>
+                        <input type="text" id="newIndustryName" class="form-control" placeholder="e.g., Hospitality" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newIndustryDescription">Description</label>
+                        <textarea id="newIndustryDescription" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createIndustryModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Industry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Confirm Action</h3>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelConfirm">Cancel</button>
+                <button class="btn btn-danger" id="confirmAction">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Detail Modal -->
+    <div class="modal" id="docDetailModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="docDetailTitle">Document Details</h3>
+                <button class="modal-close" id="closeDocDetailModal">&times;</button>
+            </div>
+            <div class="modal-body" id="docDetailBody">
+                <!-- Document details populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('docDetailModal')">Close</button>
+                <button class="btn btn-primary" id="docDownloadBtn">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/pages/dashboard.js"></script>
+    <script src="/static/js/pages/upload.js"></script>
+    <script src="/static/js/pages/documents.js"></script>
+    <script src="/static/js/pages/search.js"></script>
+    <script src="/static/js/pages/projects.js"></script>
+    <script src="/static/js/pages/expiry.js"></script>
+    <script src="/static/js/pages/alerts.js"></script>
+    <script src="/static/js/pages/analytics.js"></script>
+    <script src="/static/js/pages/settings.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
